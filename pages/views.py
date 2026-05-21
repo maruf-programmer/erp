@@ -145,11 +145,29 @@ def dashboard(request):
         student_seen_review_at__isnull=True,
     ).exclude(status=Submission.Status.PENDING)
 
+    # role-aware counts: admin sees everything, teachers/assistants/students see only their related counts
+    if admin_required(user):
+        users_count = User.objects.count()
+        courses_count = Course.objects.count()
+        teachers_count = User.objects.filter(role=User.Role.TEACHER).count()
+        students_count = User.objects.filter(role=User.Role.STUDENT).count()
+    elif user.role in {User.Role.TEACHER, User.Role.ASSISTANT}:
+        users_count = 1
+        courses_count = Course.objects.filter(groups__in=groups).distinct().count()
+        teachers_count = User.objects.filter(role__in=[User.Role.TEACHER, User.Role.ASSISTANT]).filter(teaching_groups__in=groups).distinct().count()
+        students_count = User.objects.filter(role=User.Role.STUDENT).filter(student_groups__in=groups).distinct().count()
+    else:
+        # student
+        users_count = 1
+        courses_count = Course.objects.filter(groups__students=user).distinct().count()
+        teachers_count = User.objects.filter(role__in=[User.Role.TEACHER, User.Role.ASSISTANT]).filter(teaching_groups__students=user).distinct().count()
+        students_count = 1
+
     context = {
-        'users_count': User.objects.count(),
-        'courses_count': Course.objects.count(),
-        'teachers_count': User.objects.filter(role=User.Role.TEACHER).count(),
-        'students_count': User.objects.filter(role=User.Role.STUDENT).count(),
+        'users_count': users_count,
+        'courses_count': courses_count,
+        'teachers_count': teachers_count,
+        'students_count': students_count,
         'groups_count': groups.count(),
         'submissions_count': Submission.objects.filter(Q(text__gt='') | Q(file__gt='')).count() if admin_required(user) else Submission.objects.filter(Q(text__gt='') | Q(file__gt=''), student=user).count(),
         'pending_submissions_count': pending_submissions.count(),
@@ -322,7 +340,40 @@ def course_create(request):
 def group_create(request):
     if not admin_required(request.user):
         raise PermissionDenied
-    return save_form(request, GroupForm, 'Guruh ochish', 'dashboard')
+    form = GroupForm(request.POST or None)
+    suggested_teachers = []
+    recent_teachers = User.objects.filter(role__in=[User.Role.TEACHER, User.Role.ASSISTANT]).order_by('-id')[:6]
+    unassigned_students = []
+    selected_course = None
+    # If course selected via GET param (or later via JS), compute suggestions
+    course_pk = request.GET.get('course')
+    if course_pk:
+        try:
+            selected_course = Course.objects.get(pk=course_pk)
+        except Course.DoesNotExist:
+            selected_course = None
+    # compute suggested teachers (those with least groups in this course)
+    if selected_course:
+        teachers = User.objects.filter(role__in=[User.Role.TEACHER, User.Role.ASSISTANT]).annotate(
+            course_group_count=Count('teaching_groups', filter=Q(teaching_groups__course=selected_course))
+        ).order_by('course_group_count', '-last_seen')
+        suggested_teachers = list(teachers[:6])
+        # students not in any group for this course
+        unassigned_students = User.objects.filter(role=User.Role.STUDENT).exclude(student_groups__course=selected_course).order_by('first_name')[:200]
+
+    if request.method == 'POST' and form.is_valid():
+        group = form.save()
+        messages.success(request, 'Guruh yaratildi.')
+        return redirect('dashboard')
+
+    return render(request, 'academy/form.html', {
+        'form': form,
+        'title': 'Guruh ochish',
+        'suggested_teachers': suggested_teachers,
+        'recent_teachers': recent_teachers,
+        'unassigned_students': unassigned_students,
+        'selected_course': selected_course,
+    })
 
 
 @login_required
@@ -355,23 +406,31 @@ def assignment_detail(request, pk):
     submission = None
     if is_student:
         submission = Submission.objects.filter(assignment=assignment, student=request.user).first()
-        submission_form = SubmissionForm(request.POST or None, request.FILES or None, instance=submission)
-        if request.method == 'POST' and submission_form.is_valid():
-            submission = submission_form.save(commit=False)
-            submission.assignment = assignment
-            submission.student = request.user
-            submission.status = Submission.Status.PENDING
-            submission.score = None
-            submission.silver_coins = 0
-            submission.feedback = ''
-            submission.reviewed_by = None
-            submission.reviewed_at = None
-            submission.teacher_seen_at = None
-            submission.student_seen_review_at = None
-            submission.submitted_at = timezone.now()
-            submission.save()
-            messages.success(request, 'Ishingiz tizimga yuklandi.')
-            return redirect('assignment_detail', pk=assignment.pk)
+        # Allow submission only if there is no previous submission or the previous one was explicitly rejected
+        allow_submit = submission is None or submission.status == Submission.Status.REJECTED
+        if allow_submit:
+            submission_form = SubmissionForm(request.POST or None, request.FILES or None, instance=submission)
+            if request.method == 'POST' and submission_form.is_valid():
+                submission = submission_form.save(commit=False)
+                submission.assignment = assignment
+                submission.student = request.user
+                submission.status = Submission.Status.PENDING
+                submission.score = None
+                submission.silver_coins = 0
+                submission.feedback = ''
+                submission.reviewed_by = None
+                submission.reviewed_at = None
+                submission.teacher_seen_at = None
+                submission.student_seen_review_at = None
+                submission.submitted_at = timezone.now()
+                submission.save()
+                messages.success(request, 'Ishingiz tizimga yuklandi.')
+                return redirect('assignment_detail', pk=assignment.pk)
+        else:
+            # If a student tries to POST while not allowed, ignore and show message
+            if request.method == 'POST':
+                messages.error(request, 'Sizda qayta topshirish huquqi yo‘q. Oqituvchi ruxsat berganida qayta topshira olasiz.')
+                return redirect('assignment_detail', pk=assignment.pk)
 
         if submission and submission.status != Submission.Status.PENDING and not submission.student_seen_review_at:
             submission.student_seen_review_at = timezone.now()

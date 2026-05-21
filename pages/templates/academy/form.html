@@ -25,4 +25,38 @@
         <button class="primary" type="submit">Saqlash</button>
     </div>
 </form>
+{% if suggested_teachers or recent_teachers or unassigned_students %}
+<div class="suggestions-card">
+    {% if suggested_teachers %}
+    <div class="suggestion-block">
+        <h4>Taklif etilgan o'qituvchilar (kam guruhli)</h4>
+        <ul>
+            {% for t in suggested_teachers %}
+                <li>{{ t.get_full_name }} - {{ t.username }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if recent_teachers %}
+    <div class="suggestion-block">
+        <h4>So'nggi qo'shilgan o'qituvchilar</h4>
+        <ul>
+            {% for t in recent_teachers %}
+                <li>{{ t.get_full_name }} - {{ t.username }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% if unassigned_students %}
+    <div class="suggestion-block">
+        <h4>Tanlanayotgan kursga hali qabul qilinmagan o'quvchilar</h4>
+        <ul>
+            {% for s in unassigned_students %}
+                <li>{{ s.get_full_name }} - {{ s.username }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
 {% endblock %}
