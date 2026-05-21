@@ -404,52 +404,56 @@ def assignment_detail(request, pk):
 
     submission_form = None
     submission = None
+    allow_submit = False
+    submissions = assignment.submissions.none()
+
     if is_student:
         submission = Submission.objects.filter(assignment=assignment, student=request.user).first()
         # Allow submission only if there is no previous submission or the previous one was explicitly rejected
         allow_submit = submission is None or submission.status == Submission.Status.REJECTED
-        if allow_submit:
-            submission_form = SubmissionForm(request.POST or None, request.FILES or None, instance=submission)
-            if request.method == 'POST' and submission_form.is_valid():
-                submission = submission_form.save(commit=False)
-                submission.assignment = assignment
-                submission.student = request.user
-                submission.status = Submission.Status.PENDING
-                submission.score = None
-                submission.silver_coins = 0
-                submission.feedback = ''
-                submission.reviewed_by = None
-                submission.reviewed_at = None
-                submission.teacher_seen_at = None
-                submission.student_seen_review_at = None
-                submission.submitted_at = timezone.now()
-                submission.save()
-                messages.success(request, 'Ishingiz tizimga yuklandi.')
-                return redirect('assignment_detail', pk=assignment.pk)
-        else:
-            # If a student tries to POST while not allowed, ignore and show message
-            if request.method == 'POST':
-                messages.error(request, 'Sizda qayta topshirish huquqi yo‘q. Oqituvchi ruxsat berganida qayta topshira olasiz.')
-                return redirect('assignment_detail', pk=assignment.pk)
+        submission_form = SubmissionForm(request.POST or None, request.FILES or None, instance=submission)
+
+        if allow_submit and request.method == 'POST' and submission_form.is_valid():
+            submission = submission_form.save(commit=False)
+            submission.assignment = assignment
+            submission.student = request.user
+            submission.status = Submission.Status.PENDING
+            submission.score = None
+            submission.silver_coins = 0
+            submission.feedback = ''
+            submission.reviewed_by = None
+            submission.reviewed_at = None
+            submission.teacher_seen_at = None
+            submission.student_seen_review_at = None
+            submission.submitted_at = timezone.now()
+            submission.save()
+            messages.success(request, 'Ishingiz tizimga yuklandi.')
+            return redirect('assignment_detail', pk=assignment.pk)
+
+        if not allow_submit and request.method == 'POST':
+            messages.error(request, 'Sizda qayta topshirish huquqi yo‘q. Oqituvchi ruxsat berganida qayta topshira olasiz.')
+            return redirect('assignment_detail', pk=assignment.pk)
 
         if submission and submission.status != Submission.Status.PENDING and not submission.student_seen_review_at:
             submission.student_seen_review_at = timezone.now()
             submission.save(update_fields=['student_seen_review_at'])
-
-    submissions = assignment.submissions.select_related('student').filter(Q(text__gt='') | Q(file__gt='')).annotate(
-        late_order=Case(
-            When(submitted_at__gt=assignment.deadline, then=0),
-            default=1,
-            output_field=IntegerField(),
-        )
-    ).order_by('late_order', '-submitted_at')
-    if not is_student:
+    else:
+        submissions = assignment.submissions.select_related('student').filter(Q(text__gt='') | Q(file__gt='')).annotate(
+            late_order=Case(
+                When(submitted_at__gt=assignment.deadline, then=0),
+                default=1,
+                output_field=IntegerField(),
+            )
+        ).order_by('late_order', '-submitted_at')
         submissions.filter(status=Submission.Status.PENDING, teacher_seen_at__isnull=True).update(teacher_seen_at=timezone.now())
+
     return render(request, 'academy/assignment_detail.html', {
         'assignment': assignment,
         'submission_form': submission_form,
         'submission': submission,
         'submissions': submissions,
+        'allow_submit': allow_submit,
+        'is_student': is_student,
     })
 
 
