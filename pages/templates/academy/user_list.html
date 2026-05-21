@@ -1,0 +1,46 @@
+{% extends 'academy/base.html' %}
+{% block title %}Foydalanuvchilar{% endblock %}
+{% block heading %}Xodimlar va o‘quvchilar{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <a class="primary as-link" href="{% url 'user_create' %}">Yangi foydalanuvchi</a>
+</div>
+<section class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Ism👨‍💼</th>
+                    <th>Rol👨‍💼</th>
+                    <th>Telefon📞</th>
+                    <th>Holati📶</th>
+                    <th>Oxirgi kirish</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>
+                        <strong>{{ user.get_full_name|default:user.username }}</strong>
+                        <small>{{ user.email }}</small>
+                    </td>
+                    <td>{{ user.get_role_display }}</td>
+                    <td>{{ user.phone|default:'-' }}</td>
+                    <td>
+                        <span class="status-pill {% if user.is_online %}online{% else %}offline{% endif %}">
+                            {% if user.is_online %}Online{% else %}Offline{% endif %}
+                        </span>
+                    </td>
+                    <td>
+                        <strong>{{ user.last_login_method|default:'-' }}</strong>
+                        <small>{{ user.last_seen|date:'d.m.Y H:i'|default:'hali kirilmagan' }}</small>
+                    </td>
+                    <td><a href="{% url 'user_edit' user.pk %}">Tahrirlash</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

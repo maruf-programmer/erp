@@ -1,0 +1,4 @@
+vendor/
+.pip-cache/
+*.sqlite3
+__pycache__/

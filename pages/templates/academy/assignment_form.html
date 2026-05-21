@@ -1,0 +1,38 @@
+{% extends 'academy/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="chat-composer-page">
+    {% csrf_token %}
+    <section class="composer-shell">
+        <div class="composer-top">
+            <div>
+                <h2>🏠Uyga vazifa</h2>
+               
+            </div>
+            <button class="primary" type="submit">Yuborish</button>
+        </div>
+        {% if form.errors %}
+            <div class="form-errors">{{ form.errors }}</div>
+        {% endif %}
+        <div class="composer-grid">
+            <div class="composer-meta">
+                <label>{{ form.title.label }}{{ form.title }}</label>
+                <label>{{ form.kind.label }}{{ form.kind }}</label>
+                <label>{{ form.group.label }}{{ form.group }}</label>
+                <label>{{ form.deadline.label }}{{ form.deadline }}</label>
+            </div>
+            <div class="telegram-compose">
+                {{ form.description }}
+                <div class="telegram-bar">
+                    <label class="file-pill">
+                        <span>Fayl tanlash</span>
+                        {{ form.file }}
+                    </label>
+                    <button class="send-circle" type="submit">></button>
+                </div>
+            </div>
+        </div>
+    </section>
+</form>
+{% endblock %}

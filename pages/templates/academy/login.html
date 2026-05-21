@@ -1,0 +1,26 @@
+{% load static %}
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Kirish</title>
+    <link rel="stylesheet" href="{% static 'academy/styles.css' %}">
+</head>
+<body class="login-screen">
+    <section class="login-panel">
+        <div class="login-art">
+            <span class="brand-mark">NA</span>
+            <h1>Nova Academy</h1>
+            <p>Admin, o‘qituvchi, yordamchi o‘qituvchi va o‘quvchi uchun yagona tizim.</p>
+        </div>
+        <form method="post" class="form-card login-form">
+            {% csrf_token %}
+            <h2>Tizimga kirish</h2>
+            {{ form.as_p }}
+            <button class="primary" type="submit">Kirish</button>
+            <a class="face-login-link" href="{% url 'face_login' %}">Face ID bilan kirish</a>
+        </form>
+    </section>
+</body>
+</html>

@@ -1,0 +1,48 @@
+{% extends 'academy/base.html' %}
+{% block title %}Statistika{% endblock %}
+{% block heading %}Mening statistikam{% endblock %}
+{% block content %}
+<section class="stats-grid">
+    <article><span>Jami ball</span><strong>{{ score }}</strong></article>
+    <article><span>Kumush tangalar</span><strong>{{ coins }}</strong></article>
+    <article><span>Reyting darajasi</span><strong>{{ rank }}</strong></article>
+    <article><span>Qabul qilingan</span><strong>{{ accepted_count }}</strong></article>
+    <article><span>Qaytarilgan</span><strong>{{ rejected_count }}</strong></article>
+    <article><span>Tekshirilmagan</span><strong>{{ pending_count }}</strong></article>
+</section>
+
+<section class="panel">
+    <div class="section-head">
+        <h2>Kumush yulduzchalar</h2>
+        <span>{{ coins }} tanga</span>
+    </div>
+    <div class="coin-wall">
+        {% for item in "xxxxxxxxxxxxxxxxxxxx" %}
+            <span class="{% if forloop.counter <= coins %}filled{% endif %}">*</span>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <div class="section-head">
+        <h2>Uyga vazifalar tarixi</h2>
+        <span>{{ submissions|length }} ta</span>
+    </div>
+    <div class="list">
+        {% for submission in submissions %}
+            <article class="list-item">
+                <div>
+                    <strong>{{ submission.assignment.title }}</strong>
+                    <p>{{ submission.assignment.group.name }} • {{ submission.submitted_at|date:'d.m.Y H:i' }} • Ball: {{ submission.score|default:0 }} • Kumush: {{ submission.silver_coins }}</p>
+                    {% if submission.feedback %}<p>{{ submission.feedback }}</p>{% endif %}
+                </div>
+                <span class="status-pill {% if submission.status == 'accepted' %}accepted{% elif submission.status == 'rejected' %}rejected{% else %}pending{% endif %}">
+                    {{ submission.get_status_display }}
+                </span>
+            </article>
+        {% empty %}
+            <p class="muted">Hali topshirilgan vazifa yo‘q.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

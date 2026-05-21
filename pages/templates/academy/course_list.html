@@ -1,0 +1,41 @@
+{% extends 'academy/base.html' %}
+{% block title %}Kurslar{% endblock %}
+{% block heading %}Kurslar{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <a class="primary as-link" href="{% url 'course_create' %}">Yangi kurs</a>
+</div>
+<section class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Kurs nomi</th>
+                    <th>Guruhlar</th>
+                    <th>O‘quvchilar</th>
+                    <th>Faolmi</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for course in courses %}
+                <tr>
+                    <td>
+                        <strong>{{ course.title }}</strong>
+                        <small>{{ course.description|truncatechars:60 }}</small>
+                    </td>
+                    <td>{{ course.group_count }}</td>
+                    <td>{{ course.student_count }}</td>
+                    <td>{{ course.is_active|yesno:'Ha,Yo‘q' }}</td>
+                    <td><a href="{% url 'course_edit' course.pk %}">Tahrirlash</a></td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="muted">Hali kurslar yo‘q.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

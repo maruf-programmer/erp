@@ -1,0 +1,91 @@
+{% load static %}
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Face ID bilan kirish</title>
+    <link rel="stylesheet" href="{% static 'academy/styles.css' %}">
+</head>
+<body class="login-screen">
+    <form hidden>{% csrf_token %}</form>
+    <section class="face-login-panel">
+        <div class="login-art">
+            <span class="brand-mark">ID</span>
+            <h1>Face ID😎❌</h1>
+            <p>Profilingizda rasm bo‘lsa, kamerani yoqing va yuzingizni tasdiqlang.</p>
+        </div>
+        <div class="form-card face-card">
+            <h2>Kamera orqali kirish</h2>
+            <label for="face-username">Username</label>
+            <input class="input" id="face-username" type="text" placeholder="Masalan: student1">
+            <video id="face-video" autoplay muted playsinline></video>
+            <canvas id="face-canvas" hidden></canvas>
+            <p class="face-status" id="face-status">Kamerani ishga tushiring.</p>
+            <div class="actions face-actions">
+                <a class="secondary" href="{% url 'login' %}">Parol bilan kirish</a>
+                <button class="secondary" type="button" id="start-camera">Kamerani yoqish</button>
+                <button class="primary" type="button" id="verify-face">Face ID tekshirish</button>
+            </div>
+        </div>
+    </section>
+
+    <script>
+        const video = document.getElementById('face-video');
+        const canvas = document.getElementById('face-canvas');
+        const statusBox = document.getElementById('face-status');
+        const usernameInput = document.getElementById('face-username');
+
+        function getCookie(name) {
+            const value = `; ${document.cookie}`;
+            const parts = value.split(`; ${name}=`);
+            if (parts.length === 2) return parts.pop().split(';').shift();
+            return '';
+        }
+
+        document.getElementById('start-camera').addEventListener('click', async () => {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                video.srcObject = stream;
+                statusBox.textContent = 'Kamera yoqildi. Yuzingiz ekranda aniq ko‘rinsin.';
+            } catch (error) {
+                statusBox.textContent = 'Kamera ochilmadi. Brauzerdan camera permission bering.';
+            }
+        });
+
+        document.getElementById('verify-face').addEventListener('click', async () => {
+            if (!usernameInput.value.trim()) {
+                statusBox.textContent = 'Avval username yozing.';
+                return;
+            }
+            if (!video.srcObject) {
+                statusBox.textContent = 'Avval kamerani yoqing.';
+                return;
+            }
+
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+            const image = canvas.toDataURL('image/jpeg', 0.85);
+            statusBox.textContent = 'Yuz tekshirilmoqda...';
+
+            const response = await fetch("{% url 'face_login_verify' %}", {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken'),
+                },
+                body: JSON.stringify({
+                    username: usernameInput.value.trim(),
+                    image: image,
+                }),
+            });
+            const data = await response.json();
+            statusBox.textContent = data.message;
+            if (data.ok) {
+                window.location.href = data.redirect_url;
+            }
+        });
+    </script>
+</body>
+</html>

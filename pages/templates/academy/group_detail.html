@@ -1,0 +1,33 @@
+{% extends 'academy/base.html' %}
+{% block title %}{{ group.name }}{% endblock %}
+{% block heading %}{{ group.name }}{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="section-head">
+        <div>
+            <h2>{{ group.course.title }}</h2>
+            <span>{{ group.teacher.get_full_name|default:group.teacher.username }} • {{ group.student_count|default:group.students.count }} o‘quvchi</span>
+        </div>
+        {% if request.user.role != 'student' %}
+            <a class="primary as-link" href="{% url 'assignment_create' %}">Vazifa berish</a>
+        {% endif %}
+    </div>
+    <div class="list">
+        {% for assignment in assignments %}
+            <a class="list-item link-row {% if assignment.pending_count %}urgent-row{% endif %}" href="{% url 'assignment_detail' assignment.pk %}">
+                <div>
+                    <strong>{{ assignment.title }}</strong>
+                    <p>{{ assignment.get_kind_display }} • Topshirgan: {{ assignment.submitted_count }} • Muddat: {{ assignment.deadline|date:'d.m.Y H:i' }}</p>
+                </div>
+                {% if assignment.pending_count %}
+                    <span class="notice-badge">{{ assignment.pending_count }}</span>
+                {% else %}
+                    <span>{{ assignment.created_at|date:'d.m.Y' }}</span>
+                {% endif %}
+            </a>
+        {% empty %}
+            <p class="muted">Bu guruhda hali vazifa yo‘q.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

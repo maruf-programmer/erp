@@ -1,0 +1,193 @@
+{% extends 'academy/base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block content %}
+<section class="stats-grid">
+    <article><span>Foydalanuvchilar👨‍👩‍👦‍👦</span><strong>{{ users_count }}</strong></article>
+    <article><span>Kurslar📚</span><strong>{{ courses_count }}</strong></article>
+    <article><span>O‘qituvchilar👨‍🏫</span><strong>{{ teachers_count }}</strong></article>
+    <article><span>O‘quvchilar👨‍🎓</span><strong>{{ students_count }}</strong></article>
+    <article><span>Guruhlar👥</span><strong>{{ groups_count }}</strong></article>
+    <article><span>Topshiriqlar📋</span><strong>{{ submissions_count }}</strong></article>
+    {% if request.user.role == 'teacher' or request.user.role == 'assistant' or request.user.is_superuser or request.user.role == 'admin' %}
+        <article class="{% if pending_submissions_count %}alert-card{% endif %}"><span>Tekshirilmagan</span><strong>{{ pending_submissions_count }}</strong></article>
+    {% endif %}
+    {% if request.user.role == 'student' %}
+        <article><span>Ball reytingi</span><strong>{{ student_score }}</strong></article>
+        <article><span>Kumush tangalar</span><strong>{{ student_coins }}</strong></article>
+        <article class="{% if student_notifications_count %}alert-card{% endif %}"><span>Yangi javoblar</span><strong>{{ student_notifications_count }}</strong></article>
+    {% endif %}
+</section>
+
+{% if request.user.role == 'student' %}
+{% if unread_reviewed_submissions %}
+<section class="panel">
+    <div class="section-head">
+        <h2>Yangi bildirishnomalar</h2>
+        <span class="notice-badge">{{ student_notifications_count }}</span>
+    </div>
+    <div class="list">
+        {% for submission in unread_reviewed_submissions %}
+            <a class="list-item link-row {% if submission.status == 'rejected' %}urgent-row{% endif %}" href="{% url 'assignment_detail' submission.assignment.pk %}">
+                <div>
+                    <strong>{{ submission.assignment.title }}</strong>
+                    <p>{{ submission.get_status_display }} • Ball: {{ submission.score|default:0 }} • Kumush: {{ submission.silver_coins }}</p>
+                </div>
+                <span class="status-pill {% if submission.status == 'accepted' %}accepted{% else %}rejected{% endif %}">{{ submission.get_status_display }}</span>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="panel">
+    <div class="section-head">
+        <h2>Mening statistikam</h2>
+        <a class="secondary as-link" href="{% url 'student_statistics' %}">Batafsil</a>
+    </div>
+    <div class="reward-strip">
+        <article><span>Daraja</span><strong>{{ student_rank }}</strong></article>
+        <article><span>Ball</span><strong>{{ student_score }}</strong></article>
+        <article><span>Kumush tanga</span><strong>{{ student_coins }}</strong></article>
+    </div>
+    <div class="list">
+        {% for submission in reviewed_submissions %}
+            <article class="list-item">
+                <div>
+                    <strong>{{ submission.assignment.title }}</strong>
+                    <p>{{ submission.get_status_display }} • Ball: {{ submission.score|default:0 }} • Kumush: {{ submission.silver_coins }}</p>
+                </div>
+                <span class="status-pill {% if submission.status == 'accepted' %}accepted{% else %}rejected{% endif %}">{{ submission.get_status_display }}</span>
+            </article>
+        {% empty %}
+            <p class="muted">Hali tekshirilgan vazifa yo‘q.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+{% if pending_submissions %}
+<section class="panel">
+    <div class="section-head">
+        <h2>Yangi topshiriqlar</h2>
+        <span class="notice-badge">{{ pending_submissions_count }}</span>
+    </div>
+    <div class="list">
+        {% for submission in pending_submissions %}
+            <a class="list-item link-row urgent-row" href="{% url 'assignment_detail' submission.assignment.pk %}">
+                <div>
+                    <strong>{{ submission.student }}</strong>
+                    <p>{{ submission.assignment.group.name }} • {{ submission.assignment.title }} • {{ submission.submitted_at|date:'d.m.Y H:i' }}</p>
+                </div>
+                <span class="notice-badge">!</span>
+            </a>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<section class="two-column">
+    <div class="panel">
+        <div class="section-head">
+            <h2>Guruhlar</h2>
+            <span>{{ groups|length }} ta</span>
+        </div>
+        <div class="list">
+            {% for group in groups %}
+                <a class="list-item link-row" href="{% url 'group_detail' group.pk %}">
+                    <div>
+                        <strong>{{ group.name }}</strong>
+                        <p>{{ group.course.title }} • {{ group.teacher }}</p>
+                    </div>
+                    <span>
+                        {{ group.student_count|default:group.students.count }} o‘quvchi
+                        {% if group.pending_count %}<b class="notice-badge">{{ group.pending_count }}</b>{% endif %}
+                    </span>
+                </a>
+            {% empty %}
+                <p class="muted">Hali guruh yo‘q.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="section-head">
+            <h2>Vazifalar va imtihonlar</h2>
+            <span>so‘nggilari</span>
+        </div>
+        <div class="list">
+            {% for assignment in assignments %}
+                <a class="list-item link-row" href="{% url 'assignment_detail' assignment.pk %}">
+                    <div>
+                        <strong>{{ assignment.title }}</strong>
+                        <p>{{ assignment.get_kind_display }} • {{ assignment.group.name }}</p>
+                    </div>
+                    <span>{{ assignment.deadline|date:'d.m H:i' }}</span>
+                </a>
+            {% empty %}
+                <p class="muted">Hali vazifa berilmagan.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+
+{% if recent_users %}
+<section class="two-column">
+    <div class="panel">
+        <div class="section-head">
+            <h2>Oxirgi faollar 📶</h2>
+            <span>online nazorat</span>
+        </div>
+        <div class="list">
+            {% for active_user in recent_users %}
+                <article class="list-item">
+                    <div>
+                        <strong>{{ active_user.get_full_name|default:active_user.username }}</strong>
+                        <p>{{ active_user.get_role_display }} • {{ active_user.last_seen|date:'d.m.Y H:i' }}</p>
+                    </div>
+                    <span class="status-pill {% if active_user.is_online %}online{% else %}offline{% endif %}">
+                        {% if active_user.is_online %}Online{% else %}Offline{% endif %}
+                    </span>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="section-head">
+            <h2>Kirish tarixi</h2>
+            <span>parol / Face ID</span>
+        </div>
+        <div class="list">
+            {% for activity in login_activities %}
+                <article class="list-item">
+                    <div>
+                        <strong>{{ activity.user.get_full_name|default:activity.user.username }}</strong>
+                        <p>{{ activity.get_method_display }} • {{ activity.created_at|date:'d.m.Y H:i' }}</p>
+                    </div>
+                    <span>{{ activity.ip_address|default:'local' }}</span>
+                </article>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endif %}
+
+{% if salaries %}
+<section class="panel">
+    <div class="section-head">
+        <h2>Oyliklarim</h2>
+        <span>shaxsiy</span>
+    </div>
+    <div class="salary-row">
+        {% for salary in salaries %}
+            <article>
+                <span>{{ salary.month|date:'F Y' }}</span>
+                <strong>{{ salary.total }} so‘m</strong>
+                <small>{% if salary.paid %}To‘langan{% else %}Kutilmoqda{% endif %}</small>
+            </article>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+{% endblock %}

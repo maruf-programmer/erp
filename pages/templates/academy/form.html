@@ -1,0 +1,28 @@
+{% extends 'academy/base.html' %}
+{% block title %}{{ title }}{% endblock %}
+{% block heading %}{{ title }}{% endblock %}
+{% block content %}
+<form method="post" enctype="multipart/form-data" class="form-card wide">
+    {% csrf_token %}
+    {% if form.errors %}
+        <div class="form-errors">
+            <p><strong>Iltimos, quyidagi xatolarni tuzating:</strong></p>
+            <ul>
+                {% for field in form %}
+                    {% for error in field.errors %}
+                        <li><strong>{{ field.label }}:</strong> {{ error }}</li>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                    <li>{{ error }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    {{ form.as_p }}
+    <div class="actions">
+        <a class="secondary" href="{% url 'dashboard' %}">Bekor qilish</a>
+        <button class="primary" type="submit">Saqlash</button>
+    </div>
+</form>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'academy/base.html' %}
+{% block title %}O‘quvchilar{% endblock %}
+{% block heading %}O‘quvchilar dashboardi{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="section-head">
+        <h2>Barcha o‘quvchilar</h2>
+        <span>{{ students|length }} ta</span>
+    </div>
+    <div class="student-grid">
+        {% for student in students %}
+            <article class="profile-card">
+                <div class="profile-head">
+                    {% if student.photo %}
+                        <img src="{{ student.photo.url }}" alt="">
+                    {% else %}
+                        <div class="avatar">{{ student.first_name|first|default:'S' }}</div>
+                    {% endif %}
+                    <div>
+                        <h3>{{ student.get_full_name|default:student.username }}</h3>
+                        <span class="status-pill {% if student.is_online %}online{% else %}offline{% endif %}">
+                            {% if student.is_online %}Online{% else %}Offline{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <dl class="info-list">
+                    <div><dt>Telefon</dt><dd>{{ student.phone|default:'-' }}</dd></div>
+                    <div><dt>Passport</dt><dd>{{ student.passport_number|default:'-' }}</dd></div>
+                    <div><dt>Oxirgi faollik</dt><dd>{{ student.last_seen|date:'d.m.Y H:i'|default:'hali yo‘q' }}</dd></div>
+                    <div><dt>Boshlagan sana</dt><dd>{{ student.date_joined|date:'d.m.Y' }}</dd></div>
+                </dl>
+                <div class="tag-row">
+                    {% for group in student.student_groups.all %}
+                        <span>{{ group.course.title }} • {{ group.name }} • {{ group.start_date|date:'d.m.Y' }}</span>
+                    {% empty %}
+                        <span>Guruhga biriktirilmagan</span>
+                    {% endfor %}
+                </div>
+                <a class="secondary as-link" href="{% url 'user_edit' student.pk %}">Tahrirlash</a>
+            </article>
+        {% empty %}
+            <p class="muted">Hali o‘quvchi yo‘q.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

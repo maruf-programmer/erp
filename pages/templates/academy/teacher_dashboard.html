@@ -1,0 +1,88 @@
+{% extends 'academy/base.html' %}
+{% block title %}O‘qituvchilar{% endblock %}
+{% block heading %}O‘qituvchilar dashboardi{% endblock %}
+{% block content %}
+<section class="panel">
+    <div class="section-head">
+        <h2>O‘qituvchi kurslari va guruhlari</h2>
+        <span>{{ groups|length }} ta</span>
+    </div>
+    <div class="course-group-grid">
+        {% for group in groups %}
+            <a class="group-card" href="{% url 'group_detail' group.pk %}">
+                <div>
+                    <strong>{{ group.course.title }}</strong>
+                    <h3>{{ group.name }}</h3>
+                    <p>{{ group.student_count }} o‘quvchi • {{ group.lesson_days|default:'Vaqti belgilanmagan' }}</p>
+                </div>
+                {% if group.pending_count %}
+                    <span class="notice-badge">{{ group.pending_count }}</span>
+                {% else %}
+                    <span class="status-pill accepted">Tinch</span>
+                {% endif %}
+            </a>
+        {% empty %}
+            <p class="muted">Sizga biriktirilgan guruh yo‘q.</p>
+        {% endfor %}
+    </div>
+</section>
+
+<section class="panel">
+    <div class="section-head">
+        <h2>O‘qituvchilar va yordamchilar</h2>
+        <span>{{ teachers|length }} ta</span>
+    </div>
+    <div class="teacher-grid">
+        {% for teacher in teachers %}
+            <article class="profile-card teacher-card">
+                <div class="profile-head">
+                    {% if teacher.photo %}
+                        <img src="{{ teacher.photo.url }}" alt="">
+                    {% else %}
+                        <div class="avatar">{{ teacher.first_name|first|default:'T' }}</div>
+                    {% endif %}
+                    <div>
+                        <h3>{{ teacher.get_full_name|default:teacher.username }}</h3>
+                        <p>{{ teacher.get_role_display }} • {{ teacher.date_joined|date:'d.m.Y' }} dan beri</p>
+                        <span class="status-pill {% if teacher.is_online %}online{% else %}offline{% endif %}">
+                            {% if teacher.is_online %}Online{% else %}Offline{% endif %}
+                        </span>
+                    </div>
+                </div>
+                <dl class="info-list">
+                    <div><dt>Telefon</dt><dd>{{ teacher.phone|default:'-' }}</dd></div>
+                    <div><dt>Oxirgi faollik</dt><dd>{{ teacher.last_seen|date:'d.m.Y H:i'|default:'hali yo‘q' }}</dd></div>
+                    <div><dt>Login usuli</dt><dd>{{ teacher.last_login_method|default:'-' }}</dd></div>
+                    <div>
+                        <dt>Maosh</dt>
+                        <dd>
+                            {% for salary in teacher.salaries.all %}
+                                {% if forloop.first %}{{ salary.total }} so‘m{% endif %}
+                            {% empty %}
+                                kiritilmagan
+                            {% endfor %}
+                        </dd>
+                    </div>
+                </dl>
+                <div class="tag-row">
+                    {% for group in teacher.teaching_groups.all %}
+                        <span>{{ group.course.title }} • {{ group.name }}</span>
+                        {% for assistant in group.assistants.all %}
+                            <span>Yordamchi: {{ assistant.get_full_name|default:assistant.username }} • {{ assistant.phone|default:'tel yo‘q' }}</span>
+                        {% endfor %}
+                    {% empty %}
+                        {% for group in teacher.assistant_groups.all %}
+                            <span>Yordamchi: {{ group.course.title }} • {{ group.name }}</span>
+                        {% empty %}
+                            <span>Guruhga biriktirilmagan</span>
+                        {% endfor %}
+                    {% endfor %}
+                </div>
+                <a class="secondary as-link" href="{% url 'user_edit' teacher.pk %}">Tahrirlash</a>
+            </article>
+        {% empty %}
+            <p class="muted">Hali o‘qituvchi yo‘q.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

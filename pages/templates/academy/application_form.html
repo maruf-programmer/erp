@@ -1,0 +1,35 @@
+{% load static %}
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>O‘qishga ariza</title>
+    <link rel="stylesheet" href="{% static 'academy/styles.css' %}">
+</head>
+<body class="application-body">
+    <main class="application-shell">
+        <section class="application-info">
+            <a class="home-logo" href="{% url 'home' %}">
+                <span class="brand-mark">IT</span>
+                <strong>Edu Center</strong>
+            </a>
+            <h1>O‘qishga ariza qoldiring</h1>
+            <p>Telefon raqamingizni qoldiring. Qabul bo‘limi kurs, vaqt va to‘lov bo‘yicha siz bilan bog‘lanadi.</p>
+            <div class="mini-stats">
+                <span>10 000+ talaba</span>
+                <span>28+ mentor</span>
+                <span>Real loyiha</span>
+            </div>
+        </section>
+        <form method="post" class="form-card application-card">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <div class="actions">
+                <a class="secondary" href="{% url 'home' %}">Bosh sahifa</a>
+                <button class="primary" type="submit">Arizani yuborish</button>
+            </div>
+        </form>
+    </main>
+</body>
+</html>

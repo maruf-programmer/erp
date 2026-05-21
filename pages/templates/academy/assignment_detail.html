@@ -1,0 +1,91 @@
+{% extends 'academy/base.html' %}
+{% block title %}{{ assignment.title }}{% endblock %}
+{% block heading %}{{ assignment.title }}{% endblock %}
+{% block content %}
+<section class="assignment-layout">
+    <article class="panel assignment-message">
+        <div class="section-head">
+            <h2>{{ assignment.get_kind_display }}</h2>
+            <span class="{% if assignment.is_expired %}danger{% endif %}">{{ assignment.deadline|date:'d.m.Y H:i' }}</span>
+        </div>
+        <p class="lead">{{ assignment.description }}</p>
+        <div class="meta-grid">
+            <span>Guruh: <strong>{{ assignment.group.name }}</strong></span>
+            <span>Muallif: <strong>{{ assignment.author }}</strong></span>
+        </div>
+        {% if assignment.file %}
+            <a class="download" href="{{ assignment.file.url }}" download>Biriktirilgan faylni yuklab olish</a>
+        {% endif %}
+    </article>
+
+    {% if submission_form %}
+    {% if submission and submission.has_work %}
+    <article class="panel">
+        <div class="section-head">
+            <h2>Tekshiruv holati</h2>
+            <span class="status-pill {% if submission.status == 'accepted' %}accepted{% elif submission.status == 'rejected' %}rejected{% else %}pending{% endif %}">
+                {{ submission.get_status_display }}
+            </span>
+        </div>
+        {% if submission.status == 'accepted' %}
+            <p class="lead">Uyga vazifangiz qabul qilindi. Sizga {{ submission.score|default:0 }} ball va {{ submission.silver_coins }} kumush tanga berildi.</p>
+        {% elif submission.status == 'rejected' %}
+            <p class="lead">Uyga vazifangiz qaytarildi. Izohni ko‘rib qayta yuboring.</p>
+        {% else %}
+            <p class="lead">Vazifangiz tekshiruvda turibdi.</p>
+        {% endif %}
+        {% if submission.feedback %}<p>{{ submission.feedback }}</p>{% endif %}
+    </article>
+    {% endif %}
+    <form method="post" enctype="multipart/form-data" class="student-chat-box">
+        {% csrf_token %}
+        <h2>Mening javobim</h2>
+        <div class="telegram-compose">
+            {{ submission_form.text }}
+            <div class="telegram-bar">
+                <label class="file-pill">
+                    <span>Fayl tanlash</span>
+                    {{ submission_form.file }}
+                </label>
+                <button class="send-circle" type="submit">></button>
+            </div>
+        </div>
+    </form>
+    {% else %}
+    <article class="panel">
+        <div class="section-head">
+            <h2>Topshirilgan ishlar</h2>
+            <span>{{ submissions|length }} ta</span>
+        </div>
+        <div class="list">
+            {% for submission in submissions %}
+                <article class="list-item {% if submission.status == 'pending' %}urgent-row{% endif %}">
+                    <div>
+                        <strong>{{ submission.student }}</strong>
+                        <p>
+                            {{ submission.submitted_at|date:'d.m.Y H:i' }}
+                            {% if submission.is_late %} • Kechikkan{% endif %}
+                            • Ball: {{ submission.score|default:'kiritilmagan' }}
+                            • Kumush: {{ submission.silver_coins }}
+                        </p>
+                        {% if submission.text %}<p>{{ submission.text }}</p>{% endif %}
+                        {% if submission.file %}<a href="{{ submission.file.url }}" download>Faylni olish</a>{% endif %}
+                    </div>
+                    <div class="review-actions">
+                        <span class="status-pill {% if submission.status == 'accepted' %}accepted{% elif submission.status == 'rejected' %}rejected{% else %}pending{% endif %}">{{ submission.get_status_display }}</span>
+                        <form method="post" action="{% url 'grade_submission' submission.pk %}">
+                            {% csrf_token %}
+                            <button class="primary" name="status_action" value="accepted" type="submit">Qabul qilindi</button>
+                            <button class="secondary danger-action" name="status_action" value="rejected" type="submit">Qaytarildi</button>
+                        </form>
+                        <a class="secondary as-link" href="{% url 'grade_submission' submission.pk %}">Ball berish</a>
+                    </div>
+                </article>
+            {% empty %}
+                <p class="muted">Hali hech kim topshirmagan.</p>
+            {% endfor %}
+        </div>
+    </article>
+    {% endif %}
+</section>
+{% endblock %}

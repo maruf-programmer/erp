@@ -1,0 +1,198 @@
+{% load static %}
+<!doctype html>
+<html lang="uz">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Nova Academy - IT o‘quv markaz</title>
+    <link rel="stylesheet" href="{% static 'academy/styles.css' %}">
+</head>
+<body class="home-body">
+    <header class="home-nav">
+        <a class="home-logo" href="{% url 'home' %}">
+            <span class="brand-mark">IT</span>
+            <strong>Nova Academy</strong>
+        </a>
+        <nav>
+            <a href="#about">Biz haqimizda</a>
+            <a href="#courses">Kurslar</a>
+            <a href="#teachers">Ustozlar</a>
+            <a href="#students">Talabalar</a>
+            <a href="#contact">Bog‘lanish</a>
+        </nav>
+        <div class="home-actions">
+            <a href="{% url 'login' %}">Kirish</a>
+            <a class="primary as-link" href="{% url 'apply_admission' %}">Ro‘yxatdan o‘tish</a>
+        </div>
+    </header>
+
+    {% if messages %}
+        <div class="home-message">
+            {% for message in messages %}<p>{{ message }}</p>{% endfor %}
+        </div>
+    {% endif %}
+
+    <main>
+        <section class="hero-3d">
+            <div class="hero-copy">
+                <span class="hero-badge">{{ home_settings.hero_badge|default:'2026 yil qabuli davom etmoqda' }}</span>
+                <h1>{{ home_settings.title|default:'Kelajakdagi kasbingizni kuchli IT ustozlar bilan boshlang.' }}</h1>
+                <p>{{ home_settings.subtitle|default:'Nova Academy o‘quvchilarni Python, Frontend, Backend, UI/UX, mobil dasturlash va kompyuter savodxonligi bo‘yicha real loyiha asosida tayyorlaydi.' }}</p>
+                <div class="hero-buttons">
+                    <a class="primary as-link" href="{% url 'apply_admission' %}">O‘qishga ariza qoldirish</a>
+                    <a class="secondary" href="{% url 'login' %}">Kabinetga kirish</a>
+                </div>
+            </div>
+            <div class="hero-stage" aria-hidden="true">
+                <div class="orbit orbit-one"></div>
+                <div class="orbit orbit-two"></div>
+                <div class="floating-card code-card">
+                    <span>Python</span>
+                    <strong>AI + Web</strong>
+                    <small>24 haftalik amaliy dastur</small>
+                </div>
+                <div class="floating-card student-card">
+                    <span>Natija</span>
+                    <strong>10 000+</strong>
+                    <small>tayyorlangan talaba</small>
+                </div>
+                <img class="hero-photo" src="https://images.unsplash.com/photo-1517048676732-d65bc937f952?auto=format&fit=crop&w=900&q=80" alt="">
+            </div>
+        </section>
+
+        <section class="home-stats" id="about">
+            <article><strong>{{ students_count }}+</strong><span>bir yilda tayyorlangan talabalar</span></article>
+            <article><strong>{{ teachers_count }}+</strong><span>tajribali mentorlar</span></article>
+            <article><strong>{{ groups_count }}+</strong><span>faol guruhlar</span></article>
+            <article><strong>{{ courses_count }}+</strong><span>zamonaviy yo‘nalishlar</span></article>
+        </section>
+
+        <section class="home-section split-section">
+            <div>
+                <p class="eyebrow">Markaz haqida</p>
+                <h2>Biz shunchaki dars o‘tmaymiz, o‘quvchini portfolio bilan bozorga olib chiqamiz.</h2>
+                <p>Har bir kursda vazifa, imtihon, mentor nazorati, real loyiha va yakuniy himoya bor. O‘quvchi kabineti orqali barcha materiallar, vazifalar va baholar ko‘rinadi.</p>
+            </div>
+            <div class="founder-card tilt-card">
+                {% if home_settings.founder_image %}
+                    <img src="{{ home_settings.founder_image.url }}" alt="{{ home_settings.founder_name }}">
+                {% else %}
+                    <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?auto=format&fit=crop&w=700&q=80" alt="">
+                {% endif %}
+                <div>
+                    <span>Asoschi</span>
+                    <h3>{{ home_settings.founder_name|default:'Maruf Amonturdiyev' }}</h3>
+                    <p>“{{ home_settings.founder_quote|default:'Maqsadimiz yoshlarni xalqaro darajadagi IT mutaxassisga aylantirish.' }}”</p>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-section" id="courses">
+            <div class="section-title">
+                <p class="eyebrow">Kurslar</p>
+                <h2>Eng ko‘p tanlanadigan yo‘nalishlar</h2>
+            </div>
+            <div class="course-grid">
+                <article><span>01</span><h3>Python Backend</h3><p>Django, API, database, deploy va real CRM loyiha.</p></article>
+                <article><span>02</span><h3>Frontend</h3><p>HTML, CSS, JavaScript, TypeScript, React va UI tajriba.</p></article>
+                <article><span>03</span><h3>Foundation</h3><p>Kompyuter savodxonligi, algoritm, inglizcha IT terminlar.</p></article>
+                <article><span>04</span><h3>UI/UX Dizayn</h3><p>Figma, dizayn tizimi, mobil ilova va web interfeyslar.</p></article>
+            </div>
+        </section>
+
+        <section class="home-section" id="teachers">
+            <div class="section-title">
+                <p class="eyebrow">Ustozlar</p>
+                <h2>Mentorlar va yordamchi o‘qituvchilar</h2>
+            </div>
+            <div class="people-grid">
+                {% for teacher in featured_teachers %}
+                    <article class="person-card">
+                        {% if teacher.photo %}
+                            <img class="person-photo" src="{{ teacher.photo.url }}" alt="">
+                        {% else %}
+                            <div class="avatar">{{ teacher.display_name|first|default:'U' }}</div>
+                        {% endif %}
+                        <h3>{{ teacher.display_name }}</h3>
+                        <p>{{ teacher.description|default:'Amaliy loyiha va kod review bo‘yicha mentor.' }}</p>
+                    </article>
+                {% empty %}
+                    <article class="person-card"><div class="avatar">A</div><h3>Akmal Jo‘rayev</h3><p>Python va Django bo‘yicha 6 yillik tajriba.</p></article>
+                    <article class="person-card"><div class="avatar">M</div><h3>Madina Karimova</h3><p>Frontend, UI va React mentor.</p></article>
+                    <article class="person-card"><div class="avatar">S</div><h3>Sardor Ergashev</h3><p>Algoritmlar va backend loyihalar ustoz.</p></article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="home-section best-section" id="students">
+            <div class="section-title">
+                <p class="eyebrow">Yilning eng yaxshi talabalari</p>
+                <h2>Portfolio, intizom va natija bo‘yicha yetakchilar</h2>
+            </div>
+            <div class="people-grid">
+                {% for student in best_students %}
+                    <article class="person-card gold-card">
+                        {% if student.photo %}
+                            <img class="person-photo" src="{{ student.photo.url }}" alt="">
+                        {% else %}
+                            <div class="avatar">{{ student.display_name|first|default:'S' }}</div>
+                        {% endif %}
+                        <h3>{{ student.display_name }}</h3>
+                        <p>{{ student.description|default:'Topshiriqlarni vaqtida bajarish va loyiha himoyasi bo‘yicha yuqori natija.' }}</p>
+                    </article>
+                {% empty %}
+                    <article class="person-card gold-card"><div class="avatar">N</div><h3>Nilufar Sobirova</h3><p>Frontend final loyihasi: online do‘kon.</p></article>
+                    <article class="person-card gold-card"><div class="avatar">J</div><h3>Jasur Tursunov</h3><p>Python final loyihasi: o‘quv markaz CRM.</p></article>
+                    <article class="person-card gold-card"><div class="avatar">D</div><h3>Dilshod Aliyev</h3><p>Imtihon natijasi: 96/100.</p></article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="home-section video-section">
+            <div class="section-title">
+                <p class="eyebrow">Video darslar</p>
+                <h2>Ustozlardan qisqa dars namunalari</h2>
+            </div>
+            <div class="video-grid">
+                {% for lesson in video_lessons %}
+                    <article class="video-card">
+                        {% if lesson.thumbnail %}
+                            <img src="{{ lesson.thumbnail.url }}" alt="">
+                        {% else %}
+                            <div class="video-fallback">PLAY</div>
+                        {% endif %}
+                        <h3>{{ lesson.title }}</h3>
+                        <p>{{ lesson.description|default:'Qisqa video dars va kursdan parcha.' }}</p>
+                        {% if lesson.video_url %}<a href="{{ lesson.video_url }}" target="_blank">Videoni ko‘rish</a>{% endif %}
+                    </article>
+                {% empty %}
+                    <article class="video-card"><div class="video-fallback">PLAY</div><h3>Python kirish darsi</h3><p>Backendga birinchi qadam.</p></article>
+                    <article class="video-card"><div class="video-fallback">PLAY</div><h3>Frontend mini dars</h3><p>Interfeys yaratish usullari.</p></article>
+                    <article class="video-card"><div class="video-fallback">PLAY</div><h3>Django loyiha</h3><p>CRM tizim qanday quriladi.</p></article>
+                {% endfor %}
+            </div>
+        </section>
+
+        <section class="home-section advert-band">
+            <div>
+                <span>Grant va chegirmalar</span>
+                <h2>{{ home_settings.grant_text|default:'Eng faol o‘quvchilar uchun 30% gacha chegirma va stajirovka tavsiyasi.' }}</h2>
+            </div>
+            <a class="primary as-link" href="{% url 'apply_admission' %}">Hozir ariza qoldirish</a>
+        </section>
+    </main>
+
+    <footer class="home-footer" id="contact">
+        <div>
+            <strong>Nova Academy</strong>
+            <p>Toshkent shahri, IT Park hududi. Har kuni 09:00 - 20:00.</p>
+        </div>
+        <div class="socials">
+            <a href="{{ home_settings.telegram|default:'#' }}">Telegram</a>
+            <a href="{{ home_settings.instagram|default:'#' }}">Instagram</a>
+            <a href="{{ home_settings.youtube|default:'#' }}">YouTube</a>
+            <a href="{{ home_settings.linkedin|default:'#' }}">LinkedIn</a>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,51 @@
+{% extends 'academy/base.html' %}
+{% block title %}Guruhlar{% endblock %}
+{% block heading %}Guruhlar{% endblock %}
+{% block content %}
+<div class="toolbar">
+    <a class="primary as-link" href="{% url 'group_create' %}">Yangi guruh</a>
+</div>
+<section class="panel">
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Guruh nomi👥</th>
+                    <th>Kurs📚</th>
+                    <th>O‘qituvchi👨‍🏫</th>
+                    <th>O‘quvchilar👨‍🎓</th>
+                    <th>Faolmi📶</th>
+                    <th>Xabar</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for group in groups %}
+                <tr>
+                    <td>
+                        <strong>{{ group.name }}</strong>
+                        <small>{{ group.lesson_days|default:'Vaqti belgilanmagan' }}</small>
+                    </td>
+                    <td>{{ group.course.title }}</td>
+                    <td>{{ group.teacher.get_full_name|default:group.teacher.username }}</td>
+                    <td>{{ group.student_count }}</td>
+                    <td>{{ group.is_active|yesno:'Ha,Yo‘q' }}</td>
+                    <td>{% if group.pending_count %}<span class="notice-badge">{{ group.pending_count }}</span>{% else %}-{% endif %}</td>
+                    <td>
+                        <a href="{% url 'group_detail' group.pk %}">Kirish</a>
+                        {% if request.user.is_superuser or request.user.role == 'admin' or request.user.role == 'teacher' or request.user.role == 'assistant' %}
+                            · <a href="{% url 'group_edit' group.pk %}">Tahrirlash</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="muted">Hali guruhlar yo‘q.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
